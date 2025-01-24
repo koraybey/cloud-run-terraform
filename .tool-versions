@@ -1,3 +1,5 @@
 terraform 1.9.5
 gcloud 491.0.0
+nodejs 20.9.0
+pnpm 9.5.0
 jq 1.7.1

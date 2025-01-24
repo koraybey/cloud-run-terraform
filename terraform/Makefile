@@ -1,8 +1,8 @@
 WORKSPACE := $(shell terraform workspace show 2>/dev/null || echo "default")
 
-ifeq ($(WORKSPACE),default)
-$(error Please select a workspace using 'terraform workspace select [development|staging|production]')
-endif
+# ifeq ($(WORKSPACE),default)
+# $(error Please select a workspace using 'terraform workspace select [development|staging|production]')
+# endif
 
 IMAGE=gcr.io/$(TF_VAR_project_id)/$(TF_VAR_name):$(TF_VAR_image_version)
 SERVICE_ACCOUNT=deployer

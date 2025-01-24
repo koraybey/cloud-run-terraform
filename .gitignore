@@ -3,7 +3,7 @@ service-account.json
 .env.keys
 
 # Local .terraform directories
-**/.terraform/*
+.terraform
 
 # .tfstate files
 *.tfstate

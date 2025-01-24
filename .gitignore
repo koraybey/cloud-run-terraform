@@ -1,5 +1,6 @@
 node_modules
 service-account.json
+.env.keys
 
 # Local .terraform directories
 **/.terraform/*

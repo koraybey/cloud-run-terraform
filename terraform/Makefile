@@ -1,11 +1,12 @@
 WORKSPACE := $(shell terraform workspace show 2>/dev/null || echo "default")
 
-# ifeq ($(WORKSPACE),default)
-# $(error Please select a workspace using 'terraform workspace select [development|staging|production]')
-# endif
+ifeq ($(WORKSPACE),default)
+$(error Please select a workspace using 'terraform workspace select [development|staging|production]')
+endif
 
 IMAGE=gcr.io/$(TF_VAR_project_id)/$(TF_VAR_name):$(TF_VAR_image_version)
 SERVICE_ACCOUNT=deployer
+APP_DIR ?= ../apps/koa
 
 %: SHELL := dotenvx run -f .env.$(WORKSPACE) -- /bin/bash -c
 
@@ -44,6 +45,6 @@ gc-enable-apis:
 	gcloud services enable run.googleapis.com --project $(TF_VAR_project_id)
 
 gc-push-image:
-	gcloud builds submit --tag $(IMAGE) --project $(TF_VAR_project_id)
+	cd $(APP_DIR) && gcloud builds submit --tag $(IMAGE) --project $(TF_VAR_project_id)
 
 .PHONY: show-workspace gc-login gc-create-project gc-create-service-account gc-create-service-account-keys gc-add-iam-policy-binding gc-enable-apis gc-push-image

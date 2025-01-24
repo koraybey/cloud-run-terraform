@@ -1,15 +1,19 @@
-variable "REGION" {
-  type = string
+variable "region" {
+  type        = string
+  description = "GCP region for deploying resources"
 }
 
-variable "VERSION" {
-  type = string
+variable "version" {
+  type        = string
+  description = "Container image version/tag"
 }
 
-variable "NAME" {
-  type = string
+variable "name" {
+  type        = string
+  description = "Name of the Cloud Run service"
 }
 
-variable "PROJECT_ID" {
-  type = string
+variable "project_id" {
+  type        = string
+  description = "GCP project ID"
 }

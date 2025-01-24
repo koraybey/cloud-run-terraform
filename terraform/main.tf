@@ -1,24 +1,11 @@
-provider "google" {
-  credentials = file("service-account.json")
-  project = var.PROJECT_ID
-  region  = var.REGION
-}
-
-provider "google-beta" {
-  credentials = file("service-account.json")
-  project = var.PROJECT_ID
-  region  = var.REGION
-}
-
-
-resource "google_cloud_run_service" "server" {
-  name     = var.NAME
-  location = var.REGION
+resource "google_cloud_run_service" "default" {
+  name     = var.name
+  location = var.region
 
   template {
     spec {
       containers {
-        image = "gcr.io/${var.PROJECT_ID}/${var.NAME}:${var.VERSION}"
+        image = "gcr.io/${var.project_id}/${var.name}:${var.version}"
       }
     }
   }
@@ -30,8 +17,8 @@ resource "google_cloud_run_service" "server" {
 }
 
 resource "google_cloud_run_service_iam_member" "public_access" {
-  service  = google_cloud_run_service.server.name
-  location = google_cloud_run_service.server.location
+  service  = google_cloud_run_service.default.name
+  location = google_cloud_run_service.default.location
   role     = "roles/run.invoker"
   member   = "allUsers"
 }

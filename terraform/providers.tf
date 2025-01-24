@@ -4,9 +4,11 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 4.8.0"
     }
-    google-beta = {
-      source = "hashicorp/google-beta"
-      version = "~> 6.1.0"
-    }
   }
+}
+
+provider "google" {
+  credentials = file("service-account.json")
+  project     = var.project_id
+  region      = var.region
 }

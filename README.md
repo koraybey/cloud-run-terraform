@@ -1,4 +1,4 @@
-# GCP Cloud Run Deployment
+# GCP Cloud Run Deployment with Terraform
 
 This project contains Terraform configurations for deploying services to Google Cloud Run.
 
@@ -6,29 +6,76 @@ This project contains Terraform configurations for deploying services to Google 
 
 ## Prerequisites
 
-- Terraform installed
-- Google Cloud SDK installed
-- dotenvx installed
-- Valid GCP account and permissions
+This project uses [asdf](https://asdf-vm.com/) for managing tool versions. The required versions are specified in `.tool-versions`:
 
-## Environment Variables
+```plaintext
+terraform 1.9.5
+gcloud   491.0.0
+nodejs   20.9.0
+pnpm     9.5.0
+dotenvx  1.33.0
+jq       1.7.1
+```
 
-Environment-specific variables are stored in encrypted `.env.[environment]` files:
-- `.env.development`
-- `.env.staging`
-- `.env.production`
+### Installation
 
-Required variables:
-- `TF_VAR_project_id`: GCP project ID
-- `TF_VAR_name`: Service name
-- `TF_VAR_image_version`: Container image version
-- `TF_VAR_region`: GCP region
+1. Install asdf:
+```bash
+# On macOS
+brew install asdf
 
-> **Note**: All commands should be prefixed with `dotenvx run -f .env.[environment] --` where `[environment]` is either `development`, `staging`, or `production`.
->
-> **Alternative**: A Makefile is provided to simplify these commands. You can use `make` commands instead of running them directly.
+# On Linux
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.13.1
+```
 
-> **Note**: All commands should be prefixed with `dotenvx run -f .env.[environment] --` where `[environment]` is either `development`, `staging`, or `production`.
+2. Add required plugins:
+```bash
+asdf plugin add terraform
+asdf plugin add gcloud
+asdf plugin add nodejs
+asdf plugin add pnpm
+asdf plugin add dotenvx
+asdf plugin add jq
+```
+
+3. Install all tools:
+```bash
+asdf install
+```
+
+4. Verify installation:
+```bash
+asdf current
+```
+
+5. Configure Google Cloud SDK:
+```bash
+gcloud init
+```
+
+## Command Execution
+
+### Shell Expansion and Environment Variables
+When running commands that use environment variables, we need to prevent the shell from expanding variables before dotenvx can inject them. This is done using subshell syntax ($$) in the Makefile or single quotes in direct shell commands.
+
+Using the Makefile:
+```bash
+make gc-create-project   # Makefile uses $$ for proper expansion
+```
+
+Direct shell command:
+```bash
+# Wrong ❌ - Shell expands variables before dotenvx
+dotenvx run -f .env.development -- bash -c "gcloud projects create $TF_VAR_project_id"
+
+# Correct ✅ - Using single quotes prevents premature expansion
+dotenvx run -f .env.development -- bash -c 'gcloud projects create $TF_VAR_project_id'
+
+# Also correct ✅ - Using escaped variables in double quotes
+dotenvx run -f .env.development -- bash -c "gcloud projects create \$TF_VAR_project_id"
+```
+
+For more information about shell expansion with dotenvx, see the [official documentation](https://dotenvx.com/docs/advanced/run-shell-expansion#subshell).
 
 ## Environment Setup
 

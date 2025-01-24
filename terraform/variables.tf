@@ -3,7 +3,7 @@ variable "region" {
   description = "GCP region for deploying resources"
 }
 
-variable "version" {
+variable "image_version" {
   type        = string
   description = "Container image version/tag"
 }

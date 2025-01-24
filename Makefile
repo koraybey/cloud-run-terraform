@@ -1,8 +1,18 @@
-include .env
-export $(shell sed 's/=.*//' .env)
+WORKSPACE := $(shell terraform workspace show 2>/dev/null || echo "default")
+
+ifeq ($(WORKSPACE),default)
+$(error Please select a workspace using 'terraform workspace select [development|staging|production]')
+endif
 
 IMAGE=gcr.io/$(TF_VAR_project_id)/$(TF_VAR_name):$(TF_VAR_image_version)
 SERVICE_ACCOUNT=deployer
+
+%: SHELL := dotenvx run -f .env.$(WORKSPACE) -- /bin/bash -c
+
+# Helper target to show current workspace and env file
+show-workspace:
+	@echo "Current workspace: $(WORKSPACE)"
+	@echo "Using env file: .env.$(WORKSPACE)"
 
 gc-login:
 	gcloud auth login
@@ -35,3 +45,5 @@ gc-enable-apis:
 
 gc-push-image:
 	gcloud builds submit --tag $(IMAGE) --project $(TF_VAR_project_id)
+
+.PHONY: show-workspace gc-login gc-create-project gc-create-service-account gc-create-service-account-keys gc-add-iam-policy-binding gc-enable-apis gc-push-image

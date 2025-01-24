@@ -11,16 +11,7 @@ This project contains Terraform configurations for deploying services to Google 
 
 ## Prerequisites
 
-This project uses [asdf](https://asdf-vm.com/) for managing tool versions. The required versions are specified in `.tool-versions`:
-
-```plaintext
-terraform 1.9.5
-gcloud   491.0.0
-nodejs   20.9.0
-pnpm     9.5.0
-dotenvx  1.33.0
-jq       1.7.1
-```
+This project uses [asdf](https://asdf-vm.com/) for managing tool versions. Required runtime dependencies and their versions are specified in `.tool-versions`.
 
 ### Installation
 

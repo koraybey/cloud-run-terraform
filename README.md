@@ -1,8 +1,13 @@
 # GCP Cloud Run Deployment with Terraform
 
-This project contains Terraform configurations for deploying services to Google Cloud Run.
+This project contains Terraform configurations for deploying services to Google Cloud Run. 
 
+> [!NOTE]
 > This project demonstrates deploying a Koa.js application to Google Cloud Run, but can be adapted for any containerized application with minimal changes.
+
+> [!NOTE]
+> This documentation is intentionally detailed to serve as a comprehensive guide for team members new to Terraform and infrastructure as code. Each section includes explanations and examples to help understand the deployment process.
+
 
 ## Prerequisites
 
@@ -48,45 +53,70 @@ asdf install
 asdf current
 ```
 
-5. Configure Google Cloud SDK:
-```bash
-gcloud init
+## Environment Variables
+
+This project uses `dotenvx` for secure environment variable management. Variables are encrypted using public/private key encryption.
+
+### Required Environment Variables
+
+The following variables are required:
+
+```plaintext
+TF_VAR_region              # GCP region for deployment (e.g., us-central1)
+TF_VAR_project_id          # Your GCP project ID
+TF_VAR_image_version       # Version tag for your container image
+TF_VAR_name               # Name of your application/service
+TF_VAR_service_account_name # Name of the service account to be created
 ```
 
-## Command Execution
+### Environment Variable Security
+
+1. **Encryption**: 
+   - Environment variables are encrypted using `dotenvx`
+   - Public key is stored in `DOTENV_PUBLIC_KEY_DEVELOPMENT`
+   - Private key is stored in `env.keys` and should never be commited to version control
+
+2. **Usage with dotenvx**:
+   ```bash
+   # Load encrypted environment variables
+   dotenvx run -f .env.development -- terraform plan
+   ```
 
 ### Shell Expansion and Environment Variables
-When running commands that use environment variables, we need to prevent the shell from expanding variables before dotenvx can inject them. This is done using subshell syntax ($$) in the Makefile or single quotes in direct shell commands.
 
-Using the Makefile:
-```bash
-make gc-create-project   # Makefile uses $$ for proper expansion
-```
+When using environment variables, be careful with shell expansion:
 
-Direct shell command:
 ```bash
 # Wrong ❌ - Shell expands variables before dotenvx
-dotenvx run -f .env.development -- bash -c "gcloud projects create $TF_VAR_project_id"
+dotenvx run -f .env.development -- bash -c "terraform plan $TF_VAR_project_id"
 
-# Correct ✅ - Using single quotes prevents premature expansion
-dotenvx run -f .env.development -- bash -c 'gcloud projects create $TF_VAR_project_id'
+# Correct ✅ - Using single quotes
+dotenvx run -f .env.development -- bash -c 'terraform plan $TF_VAR_project_id'
 
-# Also correct ✅ - Using escaped variables in double quotes
-dotenvx run -f .env.development -- bash -c "gcloud projects create \$TF_VAR_project_id"
+# Also correct ✅ - Using escaped variables
+dotenvx run -f .env.development -- bash -c "terraform plan \$TF_VAR_project_id"
 ```
 
 For more information about shell expansion with dotenvx, see the [official documentation](https://dotenvx.com/docs/advanced/run-shell-expansion#subshell).
 
-## Environment Setup
+### Environment Specific Configuration
 
-Select the appropriate Terraform workspace:
+Different environments (development, staging, production) should have their own encrypted environment files:
+
+- `.env.development` - Development environment variables
+- `.env.staging` - Staging environment variables
+- `.env.production` - Production environment variables
+
+To use a specific environment:
+
 ```bash
-terraform workspace select development|staging|production
+dotenvx run -f .env.[environment] -- terraform [command]
 ```
 
-Note: The default workspace is not allowed. You must explicitly select an environment.
-
 ## GCP Setup Commands
+
+> [!TIP]
+> All Google Cloud commands are available as Make targets for convenience. Use `make show-workspace` to verify your environment before running commands.
 
 ### Initial Setup
 
@@ -135,9 +165,58 @@ gcloud services enable containerregistry.googleapis.com --project $TF_VAR_projec
 gcloud services enable run.googleapis.com --project $TF_VAR_project_id
 ```
 
-### Deployment
+### Pushing Image to Registry
 
 Push container image to Google Container Registry:
 ```bash
 gcloud builds submit --tag gcr.io/$TF_VAR_project_id/$TF_VAR_name:$TF_VAR_image_version
+```
+
+## Terraform Deployment
+
+> [!CAUTION]
+> Always import existing infrastructure state before making changes to avoid accidental resource destruction. **Remember: Skipping imports = Destroying existing infrastructure.**
+
+### Import Existing Terraform State
+
+1. List existing resources:
+   ```bash
+   gcloud asset search-all-resources --project $TF_VAR_project_id
+   ```
+
+2. Import each resource:
+   ```bash
+   # Cloud Run service
+   terraform import google_cloud_run_service.service projects/$TF_VAR_project_id/locations/$TF_VAR_region/services/$TF_VAR_name
+   
+   # Service account
+   terraform import google_service_account.deployer projects/$TF_VAR_project_id/serviceAccounts/deployer@$TF_VAR_project_id.iam.gserviceaccount.com
+   ```
+
+3. Verify imports:
+   ```bash
+   terraform state list
+   ```
+
+### Deployment Commands
+
+```bash
+# Initialize Terraform and select workspace
+terraform init
+terraform workspace select development  # Never use default workspace
+
+# Import existing state (REQUIRED for existing resources)
+terraform import [RESOURCE_TYPE].[NAME] [RESOURCE_ID]
+
+# Plan changes
+dotenvx run -f .env.development -- terraform plan
+
+# Apply changes
+dotenvx run -f .env.development -- terraform apply
+
+# Remove specific resource
+terraform state rm [RESOURCE_TYPE].[NAME]
+
+# Destroy infrastructure (use with caution)
+dotenvx run -f .env.development -- terraform destroy
 ```

@@ -172,51 +172,28 @@ Push container image to Google Container Registry:
 gcloud builds submit --tag gcr.io/$TF_VAR_project_id/$TF_VAR_name:$TF_VAR_image_version
 ```
 
-## Terraform Deployment
+## Deployment Commands
 
 > [!CAUTION]
 > Always import existing infrastructure state before making changes to avoid accidental resource destruction. **Remember: Skipping imports = Destroying existing infrastructure.**
 
-### Import Existing Terraform State
-
-1. List existing resources:
-   ```bash
-   gcloud asset search-all-resources --project $TF_VAR_project_id
-   ```
-
-2. Import each resource:
-   ```bash
-   # Cloud Run service
-   terraform import google_cloud_run_service.service projects/$TF_VAR_project_id/locations/$TF_VAR_region/services/$TF_VAR_name
-   
-   # Service account
-   terraform import google_service_account.deployer projects/$TF_VAR_project_id/serviceAccounts/deployer@$TF_VAR_project_id.iam.gserviceaccount.com
-   ```
-
-3. Verify imports:
-   ```bash
-   terraform state list
-   ```
-
-### Deployment Commands
-
 ```bash
 # Initialize Terraform and select workspace
 terraform init
-terraform workspace select development  # Never use default workspace
+terraform workspace select development
 
 # Import existing state (REQUIRED for existing resources)
 terraform import [RESOURCE_TYPE].[NAME] [RESOURCE_ID]
 
 # Plan changes
-dotenvx run -f .env.development -- terraform plan
+terraform plan
 
 # Apply changes
-dotenvx run -f .env.development -- terraform apply
+terraform apply
 
 # Remove specific resource
 terraform state rm [RESOURCE_TYPE].[NAME]
 
 # Destroy infrastructure (use with caution)
-dotenvx run -f .env.development -- terraform destroy
+terraform destroy
 ```
